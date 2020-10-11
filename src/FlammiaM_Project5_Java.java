@@ -26,6 +26,23 @@ public class FlammiaM_Project5_Java{
 		//initalizes new tree
 		twoThreeTree tree = new twoThreeTree();
 		tree.initialTree(scan, debugFile);
+		while(scan.hasNextInt()){
+			int data = scan.nextInt();
+			twoThreeTree.treeNode spot = tree.findSpot(tree.root, data);
+			if(spot == null){
+				PrintStream fileOut = new PrintStream(new FileOutputStream(debugFile,true));
+				System.setOut(fileOut);
+				System.out.println("Data is in the database, not inserting.");
+				fileOut.close();
+			}
+			else{
+				spot.printNode(debugFile);
+				twoThreeTree.treeNode newNode = tree.new treeNode (data,-1);
+				tree.treeInsert(spot,newNode);
+				tree.preOrder(tree.root, debugFile);
+			}
+		}
+		tree.preOrder(tree.root, treeFile);
 	}
 }
 
@@ -98,9 +115,20 @@ class twoThreeTree{
 	treeNode root;
 	//constructor
 	twoThreeTree(){
+		treeNode dummy = new treeNode();
 		this.root = new treeNode(-1, -1);
+		dummy.child1 = root;
+		root.father = dummy;
 	}
 	//methods
+	void preOrder(treeNode root, String outFile) throws FileNotFoundException{
+		if(root == null)
+			return;
+		root.printNode(outFile);
+		preOrder(root.child1, outFile);
+		preOrder(root.child2, outFile);
+		preOrder(root.child3, outFile);
+	}
 	void initialTree(Scanner scan, String debugFile) throws NoSuchElementException,FileNotFoundException{
 		int data1 = scan.nextInt();
 		int data2 = scan.nextInt();
@@ -122,7 +150,7 @@ class twoThreeTree{
 		if(spot.child1.isLeaf())
 			return spot;
 		else{
-			if(data == spot.key1 || data ==spot.key2)
+			if(data == spot.key1 || data == spot.key2)
 				return null;
 			else if(data < spot.key1)
 				return findSpot(spot.child1, data);
@@ -151,5 +179,77 @@ class twoThreeTree{
 		fatherNode.key1 = findMinSubtree(fatherNode.child2);
 		fatherNode.key2 = findMinSubtree(fatherNode.child3);
 		updateFather(fatherNode.father);
+	}
+	void treeInsert(treeNode spot, treeNode newNode){
+		//single node in spot
+		if(spot.child1!=null && spot.child2 == null){
+			if(spot.child1.key1 < newNode.key1){
+				spot.child2 = newNode;
+			}
+			else{
+				spot.child2 = spot.child1;
+				spot.child1 = newNode;
+			}
+			if(spot == spot.father.child2 || spot == spot.father.child3){
+				this.updateFather(spot.father);
+			}
+		}
+		//case1
+		else if(spot.child1!=null && spot.child2!=null){
+			if(newNode.key1 > spot.child1.key1){
+				if(newNode.key1>spot.child2.key1){
+					spot.child3 = newNode;
+				}
+				else
+					spot.child3 = spot.child2;
+					spot.child2 = newNode;
+			}
+			else{
+				spot.child3 = spot.child2;
+				spot.child2 = spot.child1;
+				spot.child1 = newNode;
+			}
+			if(spot == spot.father.child2 || spot == spot.father.child3){
+				this.updateFather(spot.father);
+			}
+		}
+		//case2
+		if(spot.child1 != null && spot.child2 != null && spot.child3 != null){
+			treeNode temp;
+			if(newNode.key1 > spot.child1.key1){
+				if(newNode.key1 > spot.child2.key1){
+					if(newNode.key1 > spot.child3.key1){
+						temp = newNode;
+					}
+					else{
+						temp = spot.child3;
+						spot.child3 = newNode;
+					}
+				}
+				else
+					temp = spot.child3;
+					spot.child3 = spot.child2;
+					spot.child2 = newNode;
+			}
+			else{
+				temp = spot.child3;
+				spot.child3 = spot.child2;
+				spot.child2 = spot.child1;
+				spot.child1 = newNode;
+			}
+			treeNode sibling = new treeNode();
+			sibling.father = spot.father;
+			sibling.child2 = temp;
+			sibling.child1 = spot.child3;
+			spot.child3 = null;
+			spot.key1 = this.findMinSubtree(spot.child2);
+			spot.key2 = -1;
+			sibling.key1 = this.findMinSubtree(sibling.child2);
+			sibling.key2 = -1;
+			if(spot == spot.father.child2 || spot == spot.father.child3)
+				this.updateFather(spot.father);
+			if(sibling == sibling.father.child2 || sibling == sibling.father.child3)
+				this.updateFather(sibling.father);
+		}
 	}
 }
