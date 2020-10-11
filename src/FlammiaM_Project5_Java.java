@@ -38,12 +38,15 @@ public class FlammiaM_Project5_Java{
 			else{
 				PrintStream fileOut = new PrintStream(new FileOutputStream(debugFile,true));
 				System.setOut(fileOut);
-				System.out.println();
-				fileOut.close();
-				System.out.println("hasnext else");
+				System.out.println("\nData to insert:"+data);
+				System.out.println("Printing spot node...");
 				spot.printNode(debugFile);
+				
 				twoThreeTree.treeNode newNode = tree.new treeNode (data,-1);
 				tree.treeInsert(spot,newNode);
+				
+				System.setOut(fileOut);
+				System.out.println("\nPrinting post insertion");
 				tree.preOrder(tree.root, debugFile);
 			}
 		}
@@ -84,11 +87,24 @@ class twoThreeTree{
 			else
 				return false;
 		}
+		boolean isFull(){
+			if(this.child1 != null && this.child2 != null && this.child3 != null)
+				return true;
+			else
+				return false;
+		}
 		void printNode(String outFile) throws FileNotFoundException{
 			PrintStream fileOut = new PrintStream(new FileOutputStream(outFile,true));
 			System.setOut(fileOut);
 			if(this.isLeaf()){
 				System.out.print(this.key1+" "+this.key2+" null null null ");
+				if(this.father != null)
+					System.out.println(this.father.key1);
+				else
+					System.out.println("null");
+			}
+			else if(!this.isLeaf() && this.child2 == null && this.child3 == null){
+				System.out.print(this.key1+" "+this.key2+" "+this.child1.key1+" null null ");
 				if(this.father != null)
 					System.out.println(this.father.key1);
 				else
@@ -120,18 +136,21 @@ class twoThreeTree{
 	}
 	//two three tree variables
 	treeNode root;
+	treeNode dummy;
 	//constructor
 	twoThreeTree(){
-		treeNode dummy = new treeNode();
 		this.root = new treeNode(-1, -1);
-		dummy.child1 = root;
-		root.father = dummy;
+		this.dummy = new treeNode(-9, -9);
+		this.dummy.child1 = this.root;
+		this.root.father = this.dummy;
+		
 	}
 	//methods
 	void preOrder(treeNode node, String outFile) throws FileNotFoundException{
 		if(node == null)
 			return;
-		node.printNode(outFile);
+		//if(node.isLeaf())
+			node.printNode(outFile);
 		preOrder(node.child1, outFile);
 		preOrder(node.child2, outFile);
 		preOrder(node.child3, outFile);
@@ -151,7 +170,11 @@ class twoThreeTree{
 		this.root.child1 = node1;
 		this.root.child2 = node2;
 		this.root.key1 = data2;
+		
+		System.setOut(new PrintStream(new FileOutputStream(debugFile)));
+		System.out.println("\nPrinting root and first preorder...");
 		this.root.printNode(debugFile);
+		this.preOrder(this.root,debugFile);
 	}
 	
 	treeNode findSpot(treeNode spot, int data){
@@ -164,7 +187,7 @@ class twoThreeTree{
 				return findSpot(spot.child1, data);
 			else if(spot.key2 == -1 || data < spot.key2)
 				return findSpot(spot.child2, data);
-			else if(spot.key2 != -1 && data > spot.key2)
+			else if(spot.key2 != -1 && data >= spot.key2)
 				return findSpot(spot.child3, data);
 			else{
 				System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
@@ -185,18 +208,29 @@ class twoThreeTree{
 	}
 	
 	void updateFather(treeNode fatherNode){
-		if(fatherNode == root)
+		if(fatherNode == this.root)
 			return;
 		fatherNode.key1 = findMinSubtree(fatherNode.child2);
 		fatherNode.key2 = findMinSubtree(fatherNode.child3);
 		updateFather(fatherNode.father);
 	}
 	
+	void makeNewRoot(treeNode spot, treeNode sibling){
+		treeNode newRoot = new treeNode();
+		newRoot.child1 = spot;
+		newRoot.child2 = sibling;
+		spot.father = newRoot;
+		sibling.father = newRoot;
+		this.root = newRoot;
+		this.root.father = dummy;
+		this.dummy.child1 = this.root;
+		root.key1 = findMinSubtree(root.child2);
+		root.key2 = findMinSubtree(root.child3);
+	}
+	
 	void treeInsert(treeNode spot, treeNode newNode){
-		//case1
+		//case1 2 children
 		if(spot.child1!=null && spot.child2!=null && spot.child3 == null){
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("case 1");
 			newNode.father = spot;
 			treeNode min,mid,max;
 			min = spot.child1;
@@ -213,23 +247,26 @@ class twoThreeTree{
 				max = mid;
 				mid = temp;
 			}
+			
 			spot.child1 = min;
 			spot.child2 = mid;
 			spot.child3 = max;
+			
 			if(spot == spot.father.child2 || spot == spot.father.child3){
 				this.updateFather(spot.father);
 			}
 		}
-		//case2
-		else if(spot.child1 != null && spot.child2 != null && spot.child3 != null){
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("case2");
+		
+		//case2 3 children
+		else if(spot.isFull()){
 			newNode.father = spot;
 			treeNode min,mid,max,over;
+			
 			min = spot.child1;
 			mid = spot.child2;
 			max = spot.child3;
 			over = newNode;
+			
 			if(min.key1 > over.key1){
 				treeNode temp = over;
 				over = max;
@@ -271,22 +308,34 @@ class twoThreeTree{
 			if(sibling == sibling.father.child2 || sibling == sibling.father.child3)
 				this.updateFather(sibling.father);
 			
-			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("sibling");
-			treeInsert(spot.father, sibling);
+			//if root
+			if(spot == this.root){
+				this.makeNewRoot(spot,sibling);
+			}
+			else
+				treeInsert(spot.father, sibling);
+		}
+		//single node
+		else if(spot.child1 != null && spot.child2 == null && spot.child3 == null){
+			if(spot.child1.key1 > newNode.key1){
+				spot.child2 = spot.child1;
+				spot.child1 = newNode;
+				
+				spot.child2.father = spot;
+				spot.child1.father = spot;
+			}
+			else{
+				spot.child2 = newNode;
+				
+				spot.child2.father = spot;
+				spot.child1.father = spot;
+				
+			}
 		}
 		else{
 			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("single");
-			if(spot.child1 != null){
-				if(spot.child1.key1 > newNode.key1){
-					spot.child2 = spot.child1;
-					spot.child1 = newNode;
-				}
-				else{
-					spot.child2 = newNode;
-				}
-			}
+			System.out.println("didnt insert");
+			System.exit(0);
 		}
 	}
 }
