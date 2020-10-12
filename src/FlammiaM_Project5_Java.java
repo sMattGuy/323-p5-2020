@@ -148,7 +148,7 @@ class twoThreeTree{
 	void preOrder(treeNode node, String outFile) throws FileNotFoundException{
 		if(node == null)
 			return;
-		//if(node.isLeaf())
+		if(node.isLeaf())
 			node.printNode(outFile);
 		preOrder(node.child1, outFile);
 		preOrder(node.child2, outFile);
@@ -177,12 +177,12 @@ class twoThreeTree{
 	}
 	
 	treeNode findSpot(treeNode spot, int data){
+		if(data == spot.key1 || data == spot.key2)
+				return null;
 		if(spot.child1.isLeaf())
 			return spot;
 		else{
-			if(data == spot.key1 || data == spot.key2)
-				return null;
-			else if(data < spot.key1)
+			if(data < spot.key1)
 				return findSpot(spot.child1, data);
 			else if(spot.key2 == -1 || data < spot.key2)
 				return findSpot(spot.child2, data);
@@ -305,10 +305,11 @@ class twoThreeTree{
 			sibling.key1 = findMinSubtree(sibling.child2);
 			sibling.key2 = -1;
 			
-			if(spot == spot.father.child2 || spot == spot.father.child3)
-				this.updateFather(spot.father);
-			if(sibling == sibling.father.child2 || sibling == sibling.father.child3)
-				this.updateFather(sibling.father);
+			spot.child1.father = spot;
+			spot.child2.father = spot;
+			
+			sibling.child1.father = sibling;
+			sibling.child2.father = sibling;
 			
 			//if root
 			if(spot == this.root){
@@ -316,6 +317,12 @@ class twoThreeTree{
 			}
 			else
 				treeInsert(spot.father, sibling);
+			
+			if(spot == spot.father.child2 || spot == spot.father.child3)
+				this.updateFather(spot.father);
+			if(sibling == sibling.father.child2 || sibling == sibling.father.child3){
+				this.updateFather(sibling.father);
+			}
 		}
 		else{
 			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
