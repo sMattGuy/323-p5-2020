@@ -143,7 +143,6 @@ class twoThreeTree{
 		this.dummy = new treeNode(-9, -9);
 		this.dummy.child1 = this.root;
 		this.root.father = this.dummy;
-		
 	}
 	//methods
 	void preOrder(treeNode node, String outFile) throws FileNotFoundException{
@@ -201,14 +200,14 @@ class twoThreeTree{
 	int findMinSubtree(treeNode node){
 		if(node == null)
 			return -1;
-		else if(node.isLeaf())
+		if(node.isLeaf())
 			return node.key1;
 		else
 			return findMinSubtree(node.child1);
 	}
 	
 	void updateFather(treeNode fatherNode){
-		if(fatherNode == this.root)
+		if(fatherNode == null || fatherNode == this.dummy)
 			return;
 		fatherNode.key1 = findMinSubtree(fatherNode.child2);
 		fatherNode.key2 = findMinSubtree(fatherNode.child3);
@@ -251,6 +250,9 @@ class twoThreeTree{
 			spot.child1 = min;
 			spot.child2 = mid;
 			spot.child3 = max;
+			
+			spot.key1 = findMinSubtree(spot.child2);
+			spot.key2 = findMinSubtree(spot.child3);
 			
 			if(spot == spot.father.child2 || spot == spot.father.child3){
 				this.updateFather(spot.father);
@@ -315,26 +317,9 @@ class twoThreeTree{
 			else
 				treeInsert(spot.father, sibling);
 		}
-		//single node
-		else if(spot.child1 != null && spot.child2 == null && spot.child3 == null){
-			if(spot.child1.key1 > newNode.key1){
-				spot.child2 = spot.child1;
-				spot.child1 = newNode;
-				
-				spot.child2.father = spot;
-				spot.child1.father = spot;
-			}
-			else{
-				spot.child2 = newNode;
-				
-				spot.child2.father = spot;
-				spot.child1.father = spot;
-				
-			}
-		}
 		else{
 			System.setOut(new PrintStream(new FileOutputStream(FileDescriptor.out)));
-			System.out.println("didnt insert");
+			System.out.println("Critical Error: Did not insert node");
 			System.exit(0);
 		}
 	}
