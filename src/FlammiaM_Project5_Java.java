@@ -2,7 +2,12 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.io.*;
 import java.io.PrintStream;
-
+/**
+* Matthew Flammia, 23661371
+* Project 5, trees
+* to run, use 3 arguments: datafile debugfile treefile
+* this program has error checking to make sure these conditions are met
+**/
 public class FlammiaM_Project5_Java{
 	public static void main(String args[]) throws Exception{
 		//makes sure arguments are present
@@ -156,7 +161,7 @@ class twoThreeTree{
 		if(node == null)
 			return;
 		//comment out if statement to print all nodes
-		if(node.isLeaf())
+		//if(node.isLeaf())
 			node.printNode(outFile);
 		preOrder(node.child1, outFile);
 		preOrder(node.child2, outFile);
